@@ -1,8 +1,9 @@
 import select
 import subprocess
-import time
 import sys
+import time
 from typing import Optional, Tuple
+
 
 class LocalInteractiveSession:
     def __init__(self):

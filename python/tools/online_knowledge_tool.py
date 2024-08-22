@@ -1,4 +1,3 @@
-from agent import Agent
 from python.helpers import perplexity_search
 from python.helpers.tool import Tool, Response
 

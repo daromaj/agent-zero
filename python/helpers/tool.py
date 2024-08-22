@@ -1,8 +1,9 @@
 from abc import abstractmethod
-from typing import TypedDict
+
 from agent import Agent
-from python.helpers.print_style import PrintStyle
 from python.helpers import files, messages
+from python.helpers.print_style import PrintStyle
+
 
 class Response:
     def __init__(self, message: str, break_loop: bool) -> None:

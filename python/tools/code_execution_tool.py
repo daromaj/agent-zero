@@ -1,16 +1,14 @@
-from dataclasses import dataclass
-import os, json, contextlib, subprocess, ast, shlex
-from io import StringIO
+import shlex
 import time
-from typing import Literal
-from python.helpers import files, messages
-from agent import Agent
-from python.helpers.tool import Tool, Response
+from dataclasses import dataclass
+
 from python.helpers import files
+from python.helpers.docker import DockerContainerManager
 from python.helpers.print_style import PrintStyle
 from python.helpers.shell_local import LocalInteractiveSession
 from python.helpers.shell_ssh import SSHInteractiveSession
-from python.helpers.docker import DockerContainerManager
+from python.helpers.tool import Tool, Response
+
 
 @dataclass
 class State:

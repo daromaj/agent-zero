@@ -1,7 +1,11 @@
-import os, webcolors, html
+import html
+import os
 import sys
+import webcolors
 from datetime import datetime
+
 from . import files
+
 
 class PrintStyle:
     last_endline = True

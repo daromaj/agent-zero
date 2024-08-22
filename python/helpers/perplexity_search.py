@@ -1,8 +1,10 @@
 
 from openai import OpenAI
+
 import models
 
-def perplexity_search(query:str, model_name="llama-3.1-sonar-large-128k-online",api_key=None,base_url="https://api.perplexity.ai"):    
+
+def perplexity_search(query:str, model_name="llama-3.1-sonar-large-128k-online",api_key=None,base_url="https://api.perplexity.ai"):
     api_key = api_key or models.get_api_key("perplexity")
 
     client = OpenAI(api_key=api_key, base_url=base_url)

@@ -1,9 +1,10 @@
-import re, os
+import re
 from typing import Any
-from .  import files
+
+import regex
+
 # import dirtyjson
 from .dirty_json import DirtyJson
-import regex
 
 
 def json_parse_dirty(json:str) -> dict[str,Any] | None:

@@ -1,8 +1,11 @@
+from urllib.parse import urlparse
+
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urlparse
 from newspaper import Article
+
 from python.helpers.tool import Tool, Response
+
 
 class WebpageContentTool(Tool):
     def execute(self, url="", **kwargs):

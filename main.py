@@ -1,12 +1,16 @@
-import threading, time, models, os
-from ansio import application_keypad, mouse_input, raw_input
-from ansio.input import InputEvent, get_input_event
-from agent import Agent, AgentConfig
-from python.helpers.print_style import PrintStyle
-from python.helpers.files import read_file
-from python.helpers import files
-import python.helpers.timed_input as timed_input
+import models
+import os
+import threading
+import time
 
+from ansio import application_keypad, raw_input
+from ansio.input import InputEvent, get_input_event
+
+import python.helpers.timed_input as timed_input
+from agent import Agent, AgentConfig
+from python.helpers import files
+from python.helpers.files import read_file
+from python.helpers.print_style import PrintStyle
 
 input_lock = threading.Lock()
 os.chdir(files.get_abs_path("./work_dir")) #change CWD to work_dir
@@ -15,21 +19,21 @@ os.chdir(files.get_abs_path("./work_dir")) #change CWD to work_dir
 def initialize():
     
     # main chat model used by agents (smarter, more accurate)
-    chat_llm = models.get_openai_chat(model_name="gpt-4o-mini", temperature=0)
+    # chat_llm = models.get_openai_chat(model_name="gpt-4o-mini", temperature=0)
     # chat_llm = models.get_ollama_chat(model_name="gemma2:latest", temperature=0)
     # chat_llm = models.get_lmstudio_chat(model_name="TheBloke/Mistral-7B-Instruct-v0.2-GGUF", temperature=0)
     # chat_llm = models.get_openrouter(model_name="meta-llama/llama-3-8b-instruct:free")
     # chat_llm = models.get_azure_openai_chat(deployment_name="gpt-4o-mini", temperature=0)
     # chat_llm = models.get_anthropic_chat(model_name="claude-3-5-sonnet-20240620", temperature=0)
     # chat_llm = models.get_google_chat(model_name="gemini-1.5-flash", temperature=0)
-    # chat_llm = models.get_groq_chat(model_name="llama-3.1-70b-versatile", temperature=0)
+    chat_llm = models.get_groq_chat(model_name="llama-3.1-70b-versatile", temperature=0)
     
     # utility model used for helper functions (cheaper, faster)
     utility_llm = chat_llm # change if you want to use a different utility model
 
     # embedding model used for memory
-    embedding_llm = models.get_openai_embedding(model_name="text-embedding-3-small")
-    # embedding_llm = models.get_ollama_embedding(model_name="nomic-embed-text")
+    # embedding_llm = models.get_openai_embedding(model_name="text-embedding-3-small")
+    embedding_llm = models.get_ollama_embedding(model_name="nomic-embed-text")
     # embedding_llm = models.get_huggingface_embedding(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
     # agent configuration
@@ -78,14 +82,12 @@ def chat(agent:Agent):
         with input_lock:
             timeout = agent.get_data("timeout") # how long the agent is willing to wait
             if not timeout: # if agent wants to wait for user input forever
-                PrintStyle(background_color="#6C3483", font_color="white", bold=True, padding=True).print(f"User message ('e' to leave):")        
-                import readline # this fixes arrow keys in terminal
+                PrintStyle(background_color="#6C3483", font_color="white", bold=True, padding=True).print(f"User message ('e' to leave):")
                 user_input = input("> ")
                 PrintStyle(font_color="white", padding=False, log_only=True).print(f"> {user_input}") 
                 
             else: # otherwise wait for user input with a timeout
-                PrintStyle(background_color="#6C3483", font_color="white", bold=True, padding=True).print(f"User message ({timeout}s timeout, 'w' to wait, 'e' to leave):")        
-                import readline # this fixes arrow keys in terminal
+                PrintStyle(background_color="#6C3483", font_color="white", bold=True, padding=True).print(f"User message ({timeout}s timeout, 'w' to wait, 'e' to leave):")
                 # user_input = timed_input("> ", timeout=timeout)
                 user_input = timeout_input("> ", timeout=timeout)
                                     
@@ -115,9 +117,8 @@ def chat(agent:Agent):
 def intervention():
     if Agent.streaming_agent and not Agent.paused:
         Agent.paused = True # stop agent streaming
-        PrintStyle(background_color="#6C3483", font_color="white", bold=True, padding=True).print(f"User intervention ('e' to leave, empty to continue):")        
+        PrintStyle(background_color="#6C3483", font_color="white", bold=True, padding=True).print(f"User intervention ('e' to leave, empty to continue):")
 
-        import readline # this fixes arrow keys in terminal
         user_input = input("> ").strip()
         PrintStyle(font_color="white", padding=False, log_only=True).print(f"> {user_input}")        
         

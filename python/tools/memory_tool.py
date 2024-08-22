@@ -1,11 +1,13 @@
+import os
 import re
-from agent import Agent
-from python.helpers.vector_db import VectorDB, Document
-from python.helpers import files
-import os, json
-from python.helpers.tool import Tool, Response
-from python.helpers.print_style import PrintStyle
+
 from chromadb.errors import InvalidDimensionException
+
+from agent import Agent
+from python.helpers import files
+from python.helpers.print_style import PrintStyle
+from python.helpers.tool import Tool, Response
+from python.helpers.vector_db import VectorDB
 
 # TODO multiple DBs at once
 db: VectorDB | None= None

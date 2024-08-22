@@ -1,7 +1,9 @@
-import paramiko
-import time
 import re
-from typing import Optional, Tuple
+import time
+from typing import Tuple
+
+import paramiko
+
 
 class SSHInteractiveSession:
 
