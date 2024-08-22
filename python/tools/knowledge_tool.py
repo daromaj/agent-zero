@@ -4,7 +4,7 @@ import os
 from python.helpers import duckduckgo_search
 from python.helpers import files
 from python.helpers import perplexity_search
-from python.helpers.print_style import PrintStyle
+from python.helpers.print_style import display
 from python.helpers.tool import Tool, Response
 from . import memory_tool
 
@@ -18,7 +18,7 @@ class Knowledge(Tool):
             if os.getenv("API_KEY_PERPLEXITY"):
                 perplexity = executor.submit(perplexity_search.perplexity_search, question)
             else: 
-                PrintStyle.hint("No API key provided for Perplexity. Skipping Perplexity search.")
+                display.hint("No API key provided for Perplexity. Skipping Perplexity search.")
                 perplexity = None
                 
 

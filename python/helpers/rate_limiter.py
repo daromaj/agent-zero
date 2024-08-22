@@ -3,7 +3,8 @@ from collections import deque
 from dataclasses import dataclass
 from typing import Tuple
 
-from .print_style import PrintStyle
+from .display_styles import DisplayStyle
+from .print_style import display
 
 
 @dataclass
@@ -49,7 +50,7 @@ class RateLimiter:
             oldest_record = self.call_records[0]
             wait_time = oldest_record.timestamp + self.window_seconds - current_time
             if wait_time > 0:
-                PrintStyle(font_color="yellow", padding=True).print(f"Rate limit exceeded. Waiting for {wait_time:.2f} seconds due to: {', '.join(wait_reasons)}")
+                display.print(f"Rate limit exceeded. Waiting for {wait_time:.2f} seconds due to: {', '.join(wait_reasons)}", style=DisplayStyle.WARNING)
                 time.sleep(wait_time)
             current_time = time.time()
 

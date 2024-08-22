@@ -1,4 +1,3 @@
-import models
 import os
 import threading
 import time
@@ -6,11 +5,13 @@ import time
 from ansio import application_keypad, raw_input
 from ansio.input import InputEvent, get_input_event
 
+import models
 import python.helpers.timed_input as timed_input
 from agent import Agent, AgentConfig
 from python.helpers import files
+from python.helpers.display_styles import DisplayStyle
 from python.helpers.files import read_file
-from python.helpers.print_style import PrintStyle
+from python.helpers.print_style import display
 
 input_lock = threading.Lock()
 os.chdir(files.get_abs_path("./work_dir")) #change CWD to work_dir
@@ -82,23 +83,23 @@ def chat(agent:Agent):
         with input_lock:
             timeout = agent.get_data("timeout") # how long the agent is willing to wait
             if not timeout: # if agent wants to wait for user input forever
-                PrintStyle(background_color="#6C3483", font_color="white", bold=True, padding=True).print(f"User message ('e' to leave):")
+                display.print("User message ('e' to leave):", style=DisplayStyle.USER_INPUT)
                 user_input = input("> ")
-                PrintStyle(font_color="white", padding=False, log_only=True).print(f"> {user_input}") 
+                display.print(f"> {user_input}", style=DisplayStyle.USER_INPUT, log_only=True) 
                 
             else: # otherwise wait for user input with a timeout
-                PrintStyle(background_color="#6C3483", font_color="white", bold=True, padding=True).print(f"User message ({timeout}s timeout, 'w' to wait, 'e' to leave):")
+                display.print("User message ({timeout}s timeout, 'w' to wait, 'e' to leave):", style=DisplayStyle.USER_INPUT)
                 # user_input = timed_input("> ", timeout=timeout)
                 user_input = timeout_input("> ", timeout=timeout)
                                     
                 if not user_input:
                     user_input = read_file("prompts/fw.msg_timeout.md")
-                    PrintStyle(font_color="white", padding=False).stream(f"{user_input}")        
+                    display.stream(f"{user_input}")        
                 else:
                     user_input = user_input.strip()
                     if user_input.lower()=="w": # the user needs more time
                         user_input = input("> ").strip()
-                    PrintStyle(font_color="white", padding=False, log_only=True).print(f"> {user_input}")        
+                    display.print(f"> {user_input}", style=DisplayStyle.USER_INPUT, log_only=True)        
                     
                     
 
@@ -109,18 +110,18 @@ def chat(agent:Agent):
         assistant_response = agent.message_loop(user_input)
         
         # print agent0 response
-        PrintStyle(font_color="white",background_color="#1D8348", bold=True, padding=True).print(f"{agent.agent_name}: reponse:")        
-        PrintStyle(font_color="white").print(f"{assistant_response}")        
+        display.print(f"{agent.agent_name}: response:", style=DisplayStyle.AGENT_RESPONSE)        
+        display.print(f"{assistant_response}", style=DisplayStyle.AGENT_RESPONSE)        
                         
 
 # User intervention during agent streaming
 def intervention():
     if Agent.streaming_agent and not Agent.paused:
         Agent.paused = True # stop agent streaming
-        PrintStyle(background_color="#6C3483", font_color="white", bold=True, padding=True).print(f"User intervention ('e' to leave, empty to continue):")
+        display.print("User intervention ('e' to leave, empty to continue):", style=DisplayStyle.USER_INPUT)
 
         user_input = input("> ").strip()
-        PrintStyle(font_color="white", padding=False, log_only=True).print(f"> {user_input}")        
+        display.print(f"> {user_input}", style=DisplayStyle.USER_INPUT, log_only=True)        
         
         if user_input.lower() == 'e': os._exit(0) # exit the conversation when the user types 'exit'
         if user_input: Agent.streaming_agent.intervention_message = user_input # set intervention message if non-empty

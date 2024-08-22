@@ -1,15 +1,48 @@
 import html
 import os
 import sys
-import webcolors
 from datetime import datetime
 
+import webcolors
+
 from . import files
+from .display_interface import DisplayInterface
+from .display_styles import DisplayStyle
 
 
-class PrintStyle:
+class PrintStyle(DisplayInterface):
     last_endline = True
     log_file_path = None
+
+    def __init__(self):
+        self.styles = {
+            DisplayStyle.USER_INPUT: self(background_color="#6C3483", font_color="white", bold=True, padding=True),
+            DisplayStyle.AGENT_START: self(font_color="#00800", background_color="white", bold=True, padding=True),
+            DisplayStyle.AGENT_RESPONSE: self(font_color="white", background_color="#1D8348", bold=True, padding=True),
+            DisplayStyle.TOOL_USE: self(font_color="#1B4F72", background_color="white", bold=True, padding=True),
+            DisplayStyle.TOOL_RESPONSE: self(font_color="#133193", padding=True),
+            DisplayStyle.TOOL_ARG_KEY: self(font_color="#85C1E9", bold=True),
+            DisplayStyle.TOOL_ARG_VALUE: self(font_color="#85C1E9"),
+            DisplayStyle.TOOL_RESPONSE_TEXT: self(font_color="#85C1E9"),
+            DisplayStyle.HINT: self(font_color="#6C3483", padding=True),
+            DisplayStyle.ERROR: self(font_color="red", padding=True),
+            DisplayStyle.WARNING: self(font_color="yellow", padding=True),
+            DisplayStyle.DEFAULT: self(),
+        }
+
+    def print(self, *args, sep=' ', style: DisplayStyle = DisplayStyle.DEFAULT, **kwargs):
+        styled_print = self.styles[style]
+        styled_print.print(*args, sep=sep, **kwargs)
+
+    def stream(self, *args, sep=' ', style: DisplayStyle = DisplayStyle.DEFAULT, **kwargs):
+        styled_stream = self.styles[style]
+        styled_stream.stream(*args, sep=sep, **kwargs)
+
+    def hint(self, text: str):
+        self.print("Hint: " + text, style=DisplayStyle.HINT)
+
+    def error(self, text: str):
+        self.print("Error: " + text, style=DisplayStyle.ERROR)
 
     def __init__(self, bold=False, italic=False, underline=False, font_color="default", background_color="default", padding=False, log_only=False):
         self.bold = bold
@@ -121,14 +154,38 @@ class PrintStyle:
         lines = sys.stdin.readlines()
         return bool(lines) and not lines[-1].strip()
 
-    @staticmethod
-    def hint(text:str):
-        PrintStyle(font_color="#6C3483", padding=True).print("Hint: "+text)
+    def initialize(self):
+        # Initialize static instances and log file
+        self.initialize_static_instances()
+        self._initialize_log_file()
 
-    @staticmethod
-    def error(text:str):
-        PrintStyle(font_color="red", padding=True).print("Error: "+text)
+    def close(self):
+        self._close_html_log()
 
-# Ensure HTML file is closed properly when the program exits
-import atexit
-atexit.register(PrintStyle._close_html_log)
+    def initialize_static_instances(self):
+        cls = self.__class__
+        cls.USER_INPUT = cls(background_color="#6C3483", font_color="white", bold=True, padding=True)
+        cls.AGENT_START = cls(font_color="#00800", background_color="white", bold=True, padding=True)
+        cls.AGENT_RESPONSE = cls(font_color="white", background_color="#1D8348", bold=True, padding=True)
+        cls.TOOL_USE = cls(font_color="#1B4F72", background_color="white", bold=True, padding=True)
+        cls.TOOL_RESPONSE = cls(font_color="#133193", padding=True)
+        cls.HINT = cls(font_color="#6C3483", padding=True)
+        cls.ERROR = cls(font_color="red", padding=True)
+
+    def _initialize_log_file(self):
+        if PrintStyle.log_file_path is None:
+            logs_dir = files.get_abs_path("logs")
+            os.makedirs(logs_dir, exist_ok=True)
+            log_filename = datetime.now().strftime("log_%Y%m%d_%H%M%S.html")
+            PrintStyle.log_file_path = os.path.join(logs_dir, log_filename)
+            with open(PrintStyle.log_file_path, "w") as f:
+                f.write("<html><body style='background-color:black;font-family: Arial, Helvetica, sans-serif;'><pre>\n")
+
+# For terminal display
+from .print_style import PrintStyle as DisplayImpl
+
+# For web display
+# from .web_display import WebDisplay as DisplayImpl
+
+display = DisplayImpl()
+display.initialize()

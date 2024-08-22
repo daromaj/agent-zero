@@ -3,8 +3,9 @@ import time
 from dataclasses import dataclass
 
 from python.helpers import files
+from python.helpers.display_styles import DisplayStyle
 from python.helpers.docker import DockerContainerManager
-from python.helpers.print_style import PrintStyle
+from python.helpers.print_style import display
 from python.helpers.shell_local import LocalInteractiveSession
 from python.helpers.shell_ssh import SSHInteractiveSession
 from python.helpers.tool import Tool, Response
@@ -83,7 +84,7 @@ class CodeExecution(Tool):
        
         self.state.shell.send_command(command)
 
-        PrintStyle(background_color="white",font_color="#1B4F72",bold=True).print(f"{self.agent.agent_name} code execution output:")
+        display.print(f"{self.agent.agent_name} code execution output:", style=DisplayStyle.TOOL_USE)
         return self.get_terminal_output()
 
     def get_terminal_output(self):
@@ -95,9 +96,8 @@ class CodeExecution(Tool):
             if self.agent.handle_intervention(): return full_output  # wait for intervention and handle it, if paused
         
             if partial_output:
-                PrintStyle(font_color="#85C1E9").stream(partial_output)
+                display.stream(partial_output, style=DisplayStyle.TOOL_RESPONSE_TEXT)
                 idle=0    
             else:
                 idle+=1
                 if ( full_output and idle > 30 ) or ( not full_output and idle > 100 ): return full_output
-                           

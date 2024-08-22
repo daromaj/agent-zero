@@ -4,7 +4,7 @@ from typing import Optional
 
 import docker
 from python.helpers.errors import format_error
-from python.helpers.print_style import PrintStyle
+from python.helpers.print_style import display
 
 
 class DockerContainerManager:
@@ -24,8 +24,8 @@ class DockerContainerManager:
             except Exception as e:
                 err = format_error(e)
                 if ("ConnectionRefusedError(61," in err or "Error while fetching server API version" in err):
-                    PrintStyle.hint("Connection to Docker failed. Is docker or Docker Desktop running?") # hint for user
-                    PrintStyle.error(err)
+                    display.hint("Connection to Docker failed. Is docker or Docker Desktop running?")
+                    display.error(err)
                     time.sleep(5) # try again in 5 seconds
                 else: raise
         return self.client
