@@ -17,7 +17,6 @@ from python.helpers import extract_tools, rate_limiter, files, errors
 from python.helpers.display_styles import DisplayStyle
 from python.helpers.print_style import display
 
-
 @dataclass
 class AgentConfig: 
     chat_model: BaseChatModel | BaseLLM
@@ -45,8 +44,7 @@ class AgentConfig:
     code_exec_ssh_port: int = 50022
     code_exec_ssh_user: str = "root"
     code_exec_ssh_pass: str = "toor"
-    additional: Dict[str, Any] = field(default_factory=dict)
-    
+    additional: Dict[str, Any] = field(default_factory=dict)   
 
 class Agent:
 
@@ -73,7 +71,6 @@ class Agent:
         self.data = {} # free data object all the tools can use
 
         os.chdir(files.get_abs_path("./work_dir")) #change CWD to work_dir
-        
 
     def message_loop(self, msg: str):
         try:
