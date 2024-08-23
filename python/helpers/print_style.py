@@ -13,36 +13,7 @@ from .display_styles import DisplayStyle
 class PrintStyle(DisplayInterface):
     last_endline = True
     log_file_path = None
-
-    def __init__(self):
-        self.styles = {
-            DisplayStyle.USER_INPUT: self(background_color="#6C3483", font_color="white", bold=True, padding=True),
-            DisplayStyle.AGENT_START: self(font_color="#00800", background_color="white", bold=True, padding=True),
-            DisplayStyle.AGENT_RESPONSE: self(font_color="white", background_color="#1D8348", bold=True, padding=True),
-            DisplayStyle.TOOL_USE: self(font_color="#1B4F72", background_color="white", bold=True, padding=True),
-            DisplayStyle.TOOL_RESPONSE: self(font_color="#133193", padding=True),
-            DisplayStyle.TOOL_ARG_KEY: self(font_color="#85C1E9", bold=True),
-            DisplayStyle.TOOL_ARG_VALUE: self(font_color="#85C1E9"),
-            DisplayStyle.TOOL_RESPONSE_TEXT: self(font_color="#85C1E9"),
-            DisplayStyle.HINT: self(font_color="#6C3483", padding=True),
-            DisplayStyle.ERROR: self(font_color="red", padding=True),
-            DisplayStyle.WARNING: self(font_color="yellow", padding=True),
-            DisplayStyle.DEFAULT: self(),
-        }
-
-    def print(self, *args, sep=' ', style: DisplayStyle = DisplayStyle.DEFAULT, **kwargs):
-        styled_print = self.styles[style]
-        styled_print.print(*args, sep=sep, **kwargs)
-
-    def stream(self, *args, sep=' ', style: DisplayStyle = DisplayStyle.DEFAULT, **kwargs):
-        styled_stream = self.styles[style]
-        styled_stream.stream(*args, sep=sep, **kwargs)
-
-    def hint(self, text: str):
-        self.print("Hint: " + text, style=DisplayStyle.HINT)
-
-    def error(self, text: str):
-        self.print("Error: " + text, style=DisplayStyle.ERROR)
+    styles = {}
 
     def __init__(self, bold=False, italic=False, underline=False, font_color="default", background_color="default", padding=False, log_only=False):
         self.bold = bold
@@ -60,7 +31,47 @@ class PrintStyle(DisplayInterface):
             log_filename = datetime.now().strftime("log_%Y%m%d_%H%M%S.html")
             PrintStyle.log_file_path = os.path.join(logs_dir, log_filename)
             with open(PrintStyle.log_file_path, "w") as f:
-                f.write("<html><body style='background-color:black;font-family: Arial, Helvetica, sans-serif;'><pre>\n")
+                f.write("<html><body style='background-color:black;font-family: Arial, Helvetica, sans-serif;'><pre>\n")        
+
+    @classmethod
+    def initialize_styles(cls):
+        cls.styles = {
+            DisplayStyle.USER_INPUT: {"background_color": "#6C3483", "font_color": "white", "bold": True, "padding": True},
+            DisplayStyle.AGENT_START: {"font_color": "#00800", "background_color": "white", "bold": True, "padding": True},
+            DisplayStyle.AGENT_RESPONSE: {"font_color": "white", "background_color": "#1D8348", "padding": True},
+            DisplayStyle.TOOL_USE: {"font_color": "#1B4F72", "background_color": "white", "bold": True, "padding": True},
+            DisplayStyle.TOOL_RESPONSE: {"font_color": "#133193", "padding": True},
+            DisplayStyle.TOOL_ARG_KEY: {"font_color": "#85C1E9", "bold": True},
+            DisplayStyle.TOOL_ARG_VALUE: {"font_color": "#85C1E9"},
+            DisplayStyle.TOOL_RESPONSE_TEXT: {"font_color": "#85C1E9"},
+            DisplayStyle.HINT: {"font_color": "#6C3483", "padding": True},
+            DisplayStyle.ERROR: {"font_color": "red", "padding": True},
+            DisplayStyle.WARNING: {"font_color": "yellow", "padding": True},
+            DisplayStyle.DEFAULT: {},
+        }
+
+    def apply_style(self, style: DisplayStyle):
+        style_dict = self.styles.get(style, {})
+        self.bold = style_dict.get("bold", False)
+        self.italic = style_dict.get("italic", False)
+        self.underline = style_dict.get("underline", False)
+        self.font_color = style_dict.get("font_color", "default")
+        self.background_color = style_dict.get("background_color", "default")
+        self.padding = style_dict.get("padding", False)
+
+    def print(self, *args, sep=' ', style: DisplayStyle = DisplayStyle.DEFAULT, **kwargs):
+        self.apply_style(style)
+        self.print_styled(*args, sep=sep, **kwargs)
+
+    def stream(self, *args, sep=' ', style: DisplayStyle = DisplayStyle.DEFAULT, **kwargs):
+        self.apply_style(style)
+        self.stream_styled(*args, sep=sep, **kwargs)
+
+    def hint(self, text: str):
+        self.print("Hint: " + text, style=DisplayStyle.HINT)
+
+    def error(self, text: str):
+        self.print("Error: " + text, style=DisplayStyle.ERROR)
 
     def _get_rgb_color_code(self, color, is_background=False):
         try:
@@ -131,7 +142,7 @@ class PrintStyle(DisplayInterface):
         text = sep.join(map(str, args))
         return text, self._get_styled_text(text), self._get_html_styled_text(text)
         
-    def print(self, *args, sep=' ', **kwargs):
+    def print_styled(self, *args, sep=' ', **kwargs):
         self._add_padding_if_needed()
         if not PrintStyle.last_endline: 
             print()
@@ -142,8 +153,9 @@ class PrintStyle(DisplayInterface):
         self._log_html(html_text+"<br>\n")
         PrintStyle.last_endline = True
 
-    def stream(self, *args, sep=' ', **kwargs):
+    def stream_styled(self, *args, sep=' ', **kwargs):
         self._add_padding_if_needed()
+        self.background_color = "default"
         plain_text, styled_text, html_text = self.get(*args, sep=sep, **kwargs)
         if not self.log_only:
             print(styled_text, end='', flush=True)
@@ -155,22 +167,12 @@ class PrintStyle(DisplayInterface):
         return bool(lines) and not lines[-1].strip()
 
     def initialize(self):
-        # Initialize static instances and log file
-        self.initialize_static_instances()
+        # Initialize styles and log file
+        self.__class__.initialize_styles()
         self._initialize_log_file()
 
     def close(self):
         self._close_html_log()
-
-    def initialize_static_instances(self):
-        cls = self.__class__
-        cls.USER_INPUT = cls(background_color="#6C3483", font_color="white", bold=True, padding=True)
-        cls.AGENT_START = cls(font_color="#00800", background_color="white", bold=True, padding=True)
-        cls.AGENT_RESPONSE = cls(font_color="white", background_color="#1D8348", bold=True, padding=True)
-        cls.TOOL_USE = cls(font_color="#1B4F72", background_color="white", bold=True, padding=True)
-        cls.TOOL_RESPONSE = cls(font_color="#133193", padding=True)
-        cls.HINT = cls(font_color="#6C3483", padding=True)
-        cls.ERROR = cls(font_color="red", padding=True)
 
     def _initialize_log_file(self):
         if PrintStyle.log_file_path is None:

@@ -14,7 +14,8 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 from python.helpers import extract_tools, rate_limiter, files, errors
-from python.helpers.print_style import PrintStyle
+from python.helpers.display_styles import DisplayStyle
+from python.helpers.print_style import display
 
 
 @dataclass
@@ -76,7 +77,6 @@ class Agent:
 
     def message_loop(self, msg: str):
         try:
-            printer = PrintStyle(italic=True, font_color="#b3ffd9", padding=False)    
             user_message = files.read_file("./prompts/fw.user_message.md", message=msg)
             self.append_message(user_message, human=True) # Append the user's input to the history                        
             memories = self.fetch_memories(True)
@@ -104,7 +104,7 @@ class Agent:
                     self.rate_limiter.limit_call_and_input(tokens)
                     
                     # output that the agent is starting
-                    PrintStyle(bold=True, font_color="green", padding=True, background_color="white").print(f"{self.agent_name}: Starting a message:")
+                    display.print(f"{self.agent_name}: Starting a message:", style=DisplayStyle.AGENT_START)
                                             
                     for chunk in chain.stream(inputs):
                         if self.handle_intervention(agent_response): break # wait for intervention and handle it, if paused
@@ -114,7 +114,7 @@ class Agent:
                         else: content = str(chunk)
                         
                         if content:
-                            printer.stream(content) # output the agent response stream                
+                            display.stream(content, style=DisplayStyle.AGENT_RESPONSE) # output the agent response stream                
                             agent_response += content # concatenate stream into the response
 
                     self.rate_limiter.set_output_tokens(int(len(agent_response)/4))
@@ -124,7 +124,7 @@ class Agent:
                             self.append_message(agent_response) # Append the assistant's response to the history
                             warning_msg = files.read_file("./prompts/fw.msg_repeat.md")
                             self.append_message(warning_msg, human=True) # Append warning message to the history
-                            PrintStyle(font_color="orange", padding=True).print(warning_msg)
+                            display.print(warning_msg, style=DisplayStyle.WARNING)
 
                         else: #otherwise proceed with tool
                             self.append_message(agent_response) # Append the assistant's response to the history
@@ -136,7 +136,7 @@ class Agent:
                     error_message = errors.format_error(e)
                     msg_response = files.read_file("./prompts/fw.error.md", error=error_message) # error message template
                     self.append_message(msg_response, human=True)
-                    PrintStyle(font_color="red", padding=True).print(msg_response)
+                    display.print(msg_response, style=DisplayStyle.ERROR)
                     
         finally:
             Agent.streaming_agent = None # unset current streamer
@@ -168,11 +168,9 @@ class Agent:
 
         chain = prompt | self.config.utility_model
         response = ""
-        printer = None
 
         if output_label:
-            PrintStyle(bold=True, font_color="orange", padding=True, background_color="white").print(f"{self.agent_name}: {output_label}:")
-            printer = PrintStyle(italic=True, font_color="orange", padding=False)                
+            display.print(f"{self.agent_name}: {output_label}:", style=DisplayStyle.TOOL_USE)
 
         formatted_inputs = prompt.format()
         tokens = int(len(formatted_inputs)/4)     
@@ -185,7 +183,7 @@ class Agent:
             elif hasattr(chunk, "content"): content = str(chunk.content)
             else: content = str(chunk)
 
-            if printer: printer.stream(content)
+            if output_label: display.stream(content, style=DisplayStyle.TOOL_RESPONSE)
             response+=content
 
         self.rate_limiter.set_output_tokens(int(len(response)/4))
@@ -262,7 +260,7 @@ class Agent:
         else:
             msg = files.read_file("prompts/fw.msg_misformat.md")
             self.append_message(msg, human=True)
-            PrintStyle(font_color="red", padding=True).print(msg)
+            display.print(msg, style=DisplayStyle.ERROR)
 
 
     def get_tool(self, name: str, args: dict, message: str, **kwargs):
